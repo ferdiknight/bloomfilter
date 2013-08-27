@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class BloomFilter
 {
-    public final static int NUM_BITS = 8 * 300;
+    public final static int NUM_BITS = 8 * 102400;
     
     public static BigInteger computeQueryFilter(String... values)
     {
@@ -73,7 +73,7 @@ public class BloomFilter
     
     public static void main(String[] args) throws FileNotFoundException, IOException
     {
-        File file = new File("F:/words.txt");
+        File file = new File("/home/ferdi/Downloads/ciku/八万.txt");
         
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
         
@@ -83,7 +83,7 @@ public class BloomFilter
         
         while((line = reader.readLine()) != null)
         {
-            contents.addAll(Arrays.asList(line.split(" ")));
+            contents.add(line.split(" ")[0]);
         }
         
         String[] input = new String[contents.size()];
@@ -92,11 +92,23 @@ public class BloomFilter
         
         BigInteger filter = BloomFilter.computeQueryFilter(input);
         
+//        File fileoutput = new File("words");
+//        fileoutput.createNewFile();
+//        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileoutput)));
+//        
+//        for(String s : input)
+//        {
+//            writer.write(s);
+//            writer.newLine();
+//        }
+//        
+//        writer.close();
+        
         System.out.println(filter.toString(16)  + " " + filter.toByteArray().length + " " + input.length);
         reader.close();
         
         
-        file = new File("F:/testwords.txt");
+        file = new File("/home/ferdi/Downloads/ciku/增量词库.txt");
         
         reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
         
@@ -104,19 +116,49 @@ public class BloomFilter
         
         while((line = reader.readLine()) != null)
         {
-            contents_test.addAll(Arrays.asList(line.split(" ")));
+            contents_test.add(line.split(" ")[0]);
         }
         
         input = new String[contents_test.size()];
         
         contents_test.toArray(input);
         
+        int falsee = 0,falselu = 0;
+        long filtercost = 0,lucost = 0,hashcost = 0,start = 0, stop = 0,start_inner = 0, stop_inner = 0;
+        
         for(String s : input)
         {
+            start = System.currentTimeMillis();
+            
+            //start_inner = System.currentTimeMillis();
+            
             BigInteger filter_s = BloomFilter.computeQueryFilter(s);
+            
+            stop_inner = System.currentTimeMillis();
+            
+            hashcost += stop_inner - start;
+            
             if(!filter.and(filter_s).equals(filter_s))
-                System.out.println("false");
+                falsee++;
+            
+            stop = System.currentTimeMillis();
+            
+            filtercost += stop - start;
+            
+            start = System.currentTimeMillis();
+            
+            if(!contents.contains(s))
+                falselu++;
+            
+            stop = System.currentTimeMillis();
+            
+            lucost += stop - start;
+            
         }
+        
+        System.out.println(falsee + ":" + falselu);
+        
+        System.out.println(filtercost + ":" + lucost + ":" + hashcost);
         
         reader.close();
         
